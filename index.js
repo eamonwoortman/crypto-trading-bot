@@ -1,4 +1,4 @@
-const program = require('commander');
+const { program } = require('commander');
 const TradeCommand = require('./src/command/trade.js');
 const ServerCommand = require('./src/command/server.js');
 const Backfill = require('./src/command/backfill.js');

@@ -1,17 +1,16 @@
-FROM node:10
+FROM node:20-alpine
 
 MAINTAINER Daniel Espendiller <daniel@espendiller.net>
 
 # Install build-essential, sqlite in order
-RUN apt-get update && apt-get install -y \
-    sqlite \
-&& rm -rf /var/lib/apt/lists/*
+RUN apk update \
+    && apk --no-cache --update add build-base alpine-sdk && apk add git python3 sqlite
 
 WORKDIR /usr/src/app
 
 # Install app dependencies
 COPY package.json /usr/src/app/
-RUN npm install --production && \
+RUN npm install --omit=dev && \
     npm cache clean --force
 
 # Bundle app source
