@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   bot:
     container_name: crypto-trading-bot
