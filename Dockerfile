@@ -1,7 +1,7 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
-LABEL version="0.0.0"
+LABEL version="1.0.0"
 LABEL org.opencontainers.image.authors="Daniel Espendiller <daniel@espendiller.net>"
 
 # Install build-essential, sqlite in order
@@ -12,7 +12,7 @@ WORKDIR /usr/src/app
 
 # Install app dependencies
 COPY package.json /usr/src/app/
-RUN npm install --omit=dev && \
+RUN npm install --omit=dev && npm install tulind --build-from-source \
     npm cache clean --force
 
 # Apply all patches in app
