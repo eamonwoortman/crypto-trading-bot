@@ -9,7 +9,7 @@ const Notify = require('../notify/notify');
 const Slack = require('../notify/slack');
 const Mail = require('../notify/mail');
 const Telegram = require('../notify/telegram');
-
+const Discord = require('../notify/discord');
 const Tickers = require('../storage/tickers');
 const Ta = require('../modules/ta.js');
 
@@ -357,6 +357,10 @@ module.exports = {
     const telegram = _.get(config, 'notify.telegram');
     if (telegram && telegram.chat_id && telegram.chat_id.length > 0 && telegram.token && telegram.token.length > 0) {
       notifiers.push(new Telegram(this.createTelegram(), telegram, this.getLogger()));
+    }
+    const discord = _.get(config, 'notify.discord');
+    if (discord && discord.webhook && discord.webhook.length > 0) {
+      notifiers.push(new Discord(discord));
     }
 
     return (notify = new Notify(notifiers));
