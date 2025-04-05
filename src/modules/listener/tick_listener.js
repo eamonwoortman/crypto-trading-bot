@@ -16,7 +16,8 @@ module.exports = class TickListener {
     logger,
     systemUtil,
     orderExecutor,
-    orderCalculator
+    orderCalculator,
+    signalFormat
   ) {
     this.tickers = tickers;
     this.instances = instances;
@@ -29,6 +30,7 @@ module.exports = class TickListener {
     this.systemUtil = systemUtil;
     this.orderExecutor = orderExecutor;
     this.orderCalculator = orderCalculator;
+    this.signalFormat = signalFormat;
 
     this.notified = {};
   }
@@ -80,7 +82,7 @@ module.exports = class TickListener {
       // console.log('blocked')
     } else {
       this.notified[symbol.exchange + symbol.symbol + strategyKey] = new Date();
-      this.notifier.send(`[${signal} (${strategyKey})` + `] ${symbol.exchange}:${symbol.symbol} - ${ticker.ask}`);
+      this.notifySignal(signal, strategy, symbol, ticker);
 
       // log signal
       this.signalLogger.signal(
@@ -153,7 +155,7 @@ module.exports = class TickListener {
     this.logger.info(
       [new Date().toISOString(), signal, strategyKey, symbol.exchange, symbol.symbol, ticker.ask].join(' ')
     );
-    this.notifier.send(`[${signal} (${strategyKey})] ${symbol.exchange}:${symbol.symbol} - ${ticker.ask}`);
+    this.notifySignal(signal, strategy, symbol, ticker);
     this.signalLogger.signal(
       symbol.exchange,
       symbol.symbol,
@@ -298,5 +300,55 @@ module.exports = class TickListener {
     const interval = minutes * unit * 1000;
     const number = Math.ceil(new Date().getTime() / interval) * interval;
     return new Date(number).getTime() - new Date().getTime();
+  }
+
+  getInterval(strategy) {
+    let myInterval = '1m';
+    if (strategy.interval) {
+      myInterval = strategy.interval;
+    } else {
+      const strategyInstance = this.strategyManager.findStrategy(strategy.strategy);
+      if (typeof strategyInstance.getTickPeriod === 'function') {
+        myInterval = strategyInstance.getTickPeriod();
+      }
+    }
+    return myInterval;
+  }
+
+  notifySignal(signal, strategy, symbol, ticker) {
+    var signalPretty = signal.indexOf('long') != -1 ? ':green_circle: Long' : ':red_circle: Short';
+    var strategyKey = strategy.strategy;
+    var strategyPretty = this.snakeToPascal(strategyKey);
+    var tickerPeriod = this.getInterval(strategy);
+    var price = parseFloat(ticker.ask).toFixed(2);
+    var notification = this.notify_template(this.signalFormat, {
+      signal: signal,
+      signalPretty: signalPretty,
+      strategy: strategyKey,
+      strategyPretty: strategyPretty,
+      exchange: symbol.exchange,
+      symbol: symbol.symbol,
+      price: price,
+      tickerPeriod: tickerPeriod,
+    });
+    this.notifier.send(notification);
+  }
+
+  notify_template(str, data) {
+    data = data || {};
+    Object.keys(data).forEach(function(key) {
+     str = str.replace(new RegExp('{' + key + '}', 'g'), data[key]);
+    });
+    return str;
+  }
+
+  snakeToCamel(str) { 
+    return str.replace( /([-_]\w)/g, g => g[ 1 ].toUpperCase() );
+  }
+
+  snakeToPascal(str) {
+    let camelCase = this.snakeToCamel( str );
+    let pascalCase = camelCase[ 0 ].toUpperCase() + camelCase.substr( 1 );
+    return pascalCase;
   }
 };

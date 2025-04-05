@@ -219,6 +219,9 @@ module.exports = {
       return tickListener;
     }
 
+    const config = this.getConfig();
+    const signalFormat = config.notify.format;
+
     return (tickListener = new TickListener(
       this.getTickers(),
       this.getInstances(),
@@ -230,8 +233,19 @@ module.exports = {
       this.getLogger(),
       this.getSystemUtil(),
       this.getOrderExecutor(),
-      this.getOrderCalculator()
+      this.getOrderCalculator(),
+      this.getSignalFormat()
     ));
+  },
+
+  getSignalFormat : function() {
+    const config = this.getConfig();
+    const signalFormat = config.notify.format;
+
+    if (signalFormat) {
+      return signalFormat;
+    }
+    return "[{signal} ({strategy})] {exchange}:{symbol} - {price}";
   },
 
   getExchangeOrderWatchdogListener: function() {
